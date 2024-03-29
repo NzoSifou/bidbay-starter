@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { JWT_SECRET } from '../consts/secret'
+import { JWT_SECRET } from '../consts/secret.js'
 import {Request, Response, NextFunction} from "express";
 import {Token} from "../types/types";
 
