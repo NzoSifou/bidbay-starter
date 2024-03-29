@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import express from 'express'
 import { initializeDatabase } from './orm/index.js'
 import { regenerateFixtures } from './orm/fixtures/index.js'
@@ -9,8 +8,6 @@ import userRoutes from './routes/user.js'
 import bidRoutes from './routes/bid.js'
 import cors from 'cors'
 import * as process from "process";
-
-dotenv.config();
 
 const app = express()
 app.use(express.json())
@@ -27,7 +24,7 @@ async function main () {
   app.use(bidRoutes)
 
   app.listen(process.env.PORT || 3000, () => {
-    console.log(`Server started on port ${process.env.PORT}`)
+    console.log(`Server started on port 3000`)
   })
 }
 
