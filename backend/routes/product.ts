@@ -139,8 +139,30 @@ router.put('/api/products/:productId', authMiddleware, async (req: Request & { u
   );
 })
 
-router.delete('/api/products/:productId', async (req, res) => {
-  res.status(600).send()
+router.delete('/api/products/:productId', authMiddleware, async (req: Request & { user?: Token }, res) => {
+  const product: Product | null = await Product.findOne({
+    where: { id: req.params['productId'] }
+  });
+
+  if(!product)
+    return res.status(404).json(
+      {
+        'error': 'Product not found'
+      }
+    );
+
+  if(product.sellerId !== req.user!.id && !req.user!.admin)
+    return res.status(403).json(
+      {
+        'error': 'User not granted'
+      }
+    );
+
+  await Bid.destroy({ where: { productId: product.id } });
+
+  await product.destroy();
+
+  res.status(204).json();
 })
 
 export default router
