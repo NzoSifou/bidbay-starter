@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 
 const loading = ref(false);
 const error = ref(false);
+const products = ref([]);
 
 async function fetchProducts() {
   loading.value = true;
   error.value = false;
 
   try {
+    const res = await fetch("http://localhost:3000/api/products");
+    products.value = await res.json();
   } catch (e) {
     error.value = true;
   } finally {
@@ -72,7 +75,7 @@ fetchProducts();
       Une erreur est survenue lors du chargement des produits.
     </div>
     <div class="row">
-      <div class="col-md-4 mb-4" v-for="i in 10" data-test-product :key="i">
+      <div class="col-md-4 mb-4" v-for="product in products" data-test-product :key="product">
         <div class="card">
           <RouterLink :to="{ name: 'Product', params: { productId: 'TODO' } }">
             <img
