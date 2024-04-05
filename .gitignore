@@ -1,3 +1,8 @@
+# NodeJS
 node_modules/
+
+# IDE
 .idea/
-.DS_Store
+
+# OS
+**/.DS_Store
