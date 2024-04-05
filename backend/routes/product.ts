@@ -1,7 +1,8 @@
-import express from 'express'
+import express, { Request } from "express";
 import { Product, Bid, User } from '../orm/index.js'
 import authMiddleware from '../middlewares/auth.js'
 import { getDetails } from '../validators/index.js'
+import { Token } from "../types/types";
 
 const router = express.Router()
 
@@ -56,8 +57,36 @@ router.get('/api/products/:productId', async (req, res) => {
 
 // You can use the authMiddleware with req.user.id to authenticate your endpoint ;)
 
-router.post('/api/products', authMiddleware, (req, res) => {
+router.post('/api/products', authMiddleware, async (req: Request & {user?: Token}, res) => {
+  const name: string | undefined = req.body['name'];
+  const description: string | undefined = req.body['description'];
+  const pictureUrl: string | undefined = req.body['pictureUrl'];
+  const category: string | undefined = req.body['category'];
+  const originalPrice: number = + req.body['originalPrice'];
+  const endDate: string | undefined = req.body['endDate'];
 
+  if(!name || !endDate || isNaN(Date.parse(endDate)))
+    return res.status(400).json(
+      {
+        'error': 'Invalid or missing fields',
+        'details': [ 'name', 'endDate' ]
+      }
+    );
+
+  const product: Product = await Product.create({ name, description, category, originalPrice, pictureUrl, endDate, sellerId: req.user!.id });
+
+  res.status(201).json(
+    {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      originalPrice: product.originalPrice,
+      pictureUrl: product.pictureUrl,
+      endDate: product.endDate,
+      sellerId: product.sellerId
+    }
+  );
 })
 
 router.put('/api/products/:productId', async (req, res) => {
