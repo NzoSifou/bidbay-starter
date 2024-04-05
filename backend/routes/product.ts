@@ -1,12 +1,11 @@
 import express, { Request } from "express";
 import { Product, Bid, User } from '../orm/index.js'
 import authMiddleware from '../middlewares/auth.js'
-import { getDetails } from '../validators/index.js'
 import { Token } from "../types/types";
 
 const router = express.Router()
 
-router.get('/api/products', async (req, res, next) => {
+router.get('/api/products', async (req, res) => {
   const products: Product[] | null = await Product.findAll({
     include: [
       { model: User, as: 'seller', attributes: ['id', 'username'] },
@@ -36,7 +35,7 @@ router.get('/api/products/:productId', async (req, res) => {
     where: { id: req.params['productId'] },
     include: [
       { model: User, as: 'seller', attributes: ['id', 'username'] },
-      { model: Bid, as: 'bids', attributes: ['id', 'price', 'date'] }
+      { model: Bid, as: 'bids', include: [ { model: User, as: 'bidder', attributes: ['id', 'username'] } ], attributes: ['id', 'price', 'date'] }
     ]
   });
 
