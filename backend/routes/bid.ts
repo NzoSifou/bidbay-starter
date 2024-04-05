@@ -5,8 +5,28 @@ import { Token } from "../types/types";
 
 const router = express.Router()
 
-router.delete('/api/bids/:bidId', async (req, res) => {
-  res.status(600).send()
+router.delete('/api/bids/:bidId', authMiddleware, async (req: Request & { user?: Token }, res) => {
+  const bid: Bid | null = await Bid.findOne({
+    where: { id: req.params['bidId'] }
+  });
+
+  if(!bid)
+    return res.status(404).json(
+      {
+        'error': 'Bid not found'
+      }
+    );
+
+  if(bid.bidderId !== req.user!.id && !req.user!.admin)
+    return res.status(403).json(
+      {
+        'error': 'Forbidden'
+      }
+    );
+
+  await bid.destroy();
+
+  res.status(204).json();
 })
 
 router.post('/api/products/:productId/bids', authMiddleware, async (req: Request & { user?: Token }, res) => {
