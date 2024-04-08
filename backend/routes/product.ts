@@ -1,11 +1,12 @@
-import express, { Request } from "express";
-import { Product, Bid, User } from '../orm/index.js'
-import authMiddleware from '../middlewares/auth.js'
-import { Token } from "../types/types";
+import express, { Request, Response } from 'express';
 
-const router = express.Router()
+import { Product, Bid, User } from './../orm/index.js';
+import authMiddleware from './../middlewares/auth.js';
+import { Token } from './../types/types';
 
-router.get('/api/products', async (req, res) => {
+const router = express.Router();
+
+router.get('/api/products', async (req: Request, res: Response): Promise<void> => {
   const products: Product[] | null = await Product.findAll({
     include: [
       { model: User, as: 'seller', attributes: ['id', 'username'] },
@@ -13,7 +14,10 @@ router.get('/api/products', async (req, res) => {
     ]
   });
 
-  if(!products) return res.status(404).json({ 'error': 'No products found' });
+  if(!products) {
+    res.status(404).json({ 'error': 'No products found' });
+    return;
+  }
 
   const listProducts = products.map(product => ({
     "id": product.id,
@@ -30,7 +34,7 @@ router.get('/api/products', async (req, res) => {
   res.status(200).json(listProducts);
 });
 
-router.get('/api/products/:productId', async (req, res) => {
+router.get('/api/products/:productId', async (req: Request, res: Response): Promise<void> => {
   const product: Product | null = await Product.findOne({
     where: { id: req.params['productId'] },
     include: [
@@ -39,7 +43,10 @@ router.get('/api/products/:productId', async (req, res) => {
     ]
   });
 
-  if(!product) return res.status(404).json( { "error": "Product not found" } );
+  if(!product) {
+    res.status(404).json( { "error": "Product not found" } );
+    return;
+  }
 
   res.status(200).json({
     "id": product.id,
@@ -52,11 +59,11 @@ router.get('/api/products/:productId', async (req, res) => {
     "seller": product.seller,
     "bids": product.bids
   });
-})
+});
 
 // You can use the authMiddleware with req.user.id to authenticate your endpoint ;)
 
-router.post('/api/products', authMiddleware, async (req: Request & { user?: Token }, res) => {
+router.post('/api/products', authMiddleware, async (req: Request & { user?: Token }, res: Response): Promise<void> => {
   const name: string | undefined = req.body['name'];
   const description: string | undefined = req.body['description'];
   const pictureUrl: string | undefined = req.body['pictureUrl'];
@@ -64,13 +71,15 @@ router.post('/api/products', authMiddleware, async (req: Request & { user?: Toke
   const originalPrice: number = + req.body['originalPrice'];
   const endDate: string | undefined = req.body['endDate'];
 
-  if(!name || !endDate || isNaN(Date.parse(endDate)))
-    return res.status(400).json(
+  if(!name || !endDate || isNaN(Date.parse(endDate))) {
+    res.status(400).json(
       {
         'error': 'Invalid or missing fields',
         'details': [ 'name', 'endDate' ]
       }
     );
+    return;
+  }
 
   const product: Product = await Product.create({ name, description, category, originalPrice, pictureUrl, endDate, sellerId: req.user!.id });
 
@@ -86,9 +95,9 @@ router.post('/api/products', authMiddleware, async (req: Request & { user?: Toke
       sellerId: product.sellerId
     }
   );
-})
+});
 
-router.put('/api/products/:productId', authMiddleware, async (req: Request & { user?: Token }, res) => {
+router.put('/api/products/:productId', authMiddleware, async (req: Request & { user?: Token }, res: Response): Promise<void> => {
   const name: string | undefined = req.body['name'];
   const description: string | undefined = req.body['description'];
   const pictureUrl: string | undefined = req.body['pictureUrl'];
@@ -97,31 +106,37 @@ router.put('/api/products/:productId', authMiddleware, async (req: Request & { u
   const endDate: string | undefined = req.body['endDate'];
   const sellerId: string | undefined = req.body['sellerId'];
 
-  if(!name || !endDate || isNaN(Date.parse(endDate)))
-    return res.status(400).json(
+  if(!name || !endDate || isNaN(Date.parse(endDate))) {
+    res.status(400).json(
       {
         'error': 'Invalid or missing fields',
         'details': [ 'name', 'endDate' ]
       }
     );
+    return;
+  }
 
   const product: Product | null = await Product.findOne({
     where: { id: req.params['productId'] }
   });
 
-  if(!product)
-    return res.status(404).json(
+  if(!product) {
+    res.status(404).json(
       {
         'error': 'Product not found'
       }
     );
+    return;
+  }
 
-  if(product.sellerId !== req.user!.id && !req.user!.admin)
-    return res.status(403).json(
+  if(product.sellerId !== req.user!.id && !req.user!.admin) {
+    res.status(403).json(
       {
         'error': 'Forbidden'
       }
     );
+    return;
+  }
 
   await product.update({ id: req.params['productId'], name, description, category, originalPrice, pictureUrl, endDate, sellerId })
 
@@ -137,32 +152,36 @@ router.put('/api/products/:productId', authMiddleware, async (req: Request & { u
       sellerId: product.sellerId,
     }
   );
-})
+});
 
-router.delete('/api/products/:productId', authMiddleware, async (req: Request & { user?: Token }, res) => {
+router.delete('/api/products/:productId', authMiddleware, async (req: Request & { user?: Token }, res: Response): Promise<void> => {
   const product: Product | null = await Product.findOne({
     where: { id: req.params['productId'] }
   });
 
-  if(!product)
-    return res.status(404).json(
+  if(!product) {
+    res.status(404).json(
       {
         'error': 'Product not found'
       }
     );
+    return;
+  }
 
-  if(product.sellerId !== req.user!.id && !req.user!.admin)
-    return res.status(403).json(
+  if(product.sellerId !== req.user!.id && !req.user!.admin) {
+    res.status(403).json(
       {
         'error': 'User not granted'
       }
     );
+    return;
+  }
 
   await Bid.destroy({ where: { productId: product.id } });
 
   await product.destroy();
 
   res.status(204).json();
-})
+});
 
-export default router
+export default router;

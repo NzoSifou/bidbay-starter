@@ -1,9 +1,10 @@
-import express from 'express'
-import { User, Product, Bid } from '../orm/index.js'
+import express, { Request, Response } from 'express';
 
-const router = express.Router()
+import { User, Product, Bid } from './../orm/index.js';
 
-router.get('/api/users/:userId', async (req, res) => {
+const router = express.Router();
+
+router.get('/api/users/:userId', async (req: Request, res: Response): Promise<void> => {
   const info: User | null = await User.findOne({
     where: { id: req.params['userId'] },
     include: [
@@ -26,6 +27,6 @@ router.get('/api/users/:userId', async (req, res) => {
         "bids": info.bids
       }
     );
-})
+});
 
-export default router
+export default router;
